@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spectrum Holidays - Kerala Tours & Travels</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet Map & Routing CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+
+  <!-- Leaflet Map & Routing JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+  <!-- PDF Generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    #map { height: 380px; width: 100%; border-radius: 0.5rem; }
+    .leaflet-routing-container { display: none; } /* Keeps UI clean; calculation works in background */
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans p-4 md:p-8">
+
+  <div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <header class="bg-emerald-700 text-white p-6 rounded-xl shadow-md text-center">
+      <h1 class="text-3xl font-bold tracking-tight">Spectrum Holidays</h1>
+      <p class="text-emerald-100 text-sm mt-1">Kerala Tour Packages • Instant Fare Estimation • Official Booking Memorandum</p>
+    </header>
+
+    <!-- Popular Kerala Packages Section -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+      <h2 class="text-xl font-semibold text-slate-900 mb-3">Featured Kerala Holiday Packages</h2>
+      <div class="grid sm:grid-cols-3 gap-4">
+        <div class="border border-slate-200 p-4 rounded-lg bg-slate-50 hover:border-emerald-500 transition">
+          <span class="text-xs font-bold uppercase text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">3D / 2N</span>
+          <h3 class="font-bold text-slate-900 mt-2">Munnar Hill Escape</h3>
+          <p class="text-xs text-slate-500 mt-1">Tea Gardens, Mattupetty Dam, Top Station & Waterfalls.</p>
+          <p class="text-sm font-semibold text-emerald-800 mt-3">From ₹8,999 / couple</p>
+        </div>
+
+        <div class="border border-slate-200 p-4 rounded-lg bg-slate-50 hover:border-emerald-500 transition">
+          <span class="text-xs font-bold uppercase text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">2D / 1N</span>
+          <h3 class="font-bold text-slate-900 mt-2">Alleppey Backwaters</h3>
+          <p class="text-xs text-slate-500 mt-1">Deluxe Houseboat Cruise, Kerala Meals & Sunset Shikara.</p>
+          <p class="text-sm font-semibold text-emerald-800 mt-3">From ₹7,499 / couple</p>
+        </div>
+
+        <div class="border border-slate-200 p-4 rounded-lg bg-slate-50 hover:border-emerald-500 transition">
+          <span class="text-xs font-bold uppercase text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">4D / 3N</span>
+          <h3 class="font-bold text-slate-900 mt-2">Wayanad Adventure</h3>
+          <p class="text-xs text-slate-500 mt-1">Edakkal Caves, Banasura Sagar Dam, Chembra Peak & Viewpoints.</p>
+          <p class="text-sm font-semibold text-emerald-800 mt-3">From ₹11,499 / couple</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trip Planner & Map Section -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 grid md:grid-cols-2 gap-6">
+      <div class="space-y-4">
+        <h2 class="text-xl font-semibold text-slate-900">Custom Trip Fare Calculator</h2>
+        
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Starting Point</label>
+          <select id="startPoint" class="w-full border rounded-lg p-2.5 bg-slate-50 border-slate-300">
+            <option value="9.9312,76.2673">Kochi (Cochin)</option>
+            <option value="8.5241,76.9366">Thiruvananthapuram (Trivandrum)</option>
+            <option value="8.8932,76.6141">Kollam</option>
+            <option value="11.2588,75.7804">Kozhikode (Calicut)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Destination Point</label>
+          <select id="endPoint" class="w-full border rounded-lg p-2.5 bg-slate-50 border-slate-300">
+            <option value="10.0889,77.0595">Munnar</option>
+            <option value="9.4981,76.3388">Alleppey (Alappuzha)</option>
+            <option value="9.6031,77.1615">Thekkady</option>
+            <option value="11.6854,76.1320">Wayanad</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Vehicle Category</label>
+          <select id="vehicleType" class="w-full border rounded-lg p-2.5 bg-slate-50 border-slate-300">
+            <option value="14" data-name="Sedan (Dzire / Etios)">Sedan (Dzire / Etios) - ₹14/km</option>
+            <option value="18" data-name="SUV (Ertiga)">SUV (Ertiga) - ₹18/km</option>
+            <option value="22" data-name="Premium (Innova Crysta)">Premium (Innova Crysta) - ₹22/km</option>
+            <option value="32" data-name="Tempo Traveller">Tempo Traveller - ₹32/km</option>
+          </select>
+        </div>
+
+        <button onclick="calculateRoute()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg transition">
+          Calculate Route & Fare
+        </button>
+
+        <div id="fareSummary" class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 hidden">
+          <p class="text-sm">Estimated Road Distance: <strong id="summaryDistance">0 km</strong></p>
+          <p class="text-lg font-bold">Estimated Base Fare: <span id="summaryFare">₹0</span></p>
+          <p class="text-xs text-emerald-600 mt-1">*Excludes toll, parking & driver bata (₹400/day).</p>
+        </div>
+      </div>
+
+      <!-- Live Map Display -->
+      <div>
+        <div id="map"></div>
+      </div>
+    </div>
+
+    <!-- Booking Details Form -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+      <h2 class="text-xl font-semibold text-slate-900">Enter Details & Generate Contract</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Customer Full Name</label>
+          <input type="text" id="custName" placeholder="e.g. Rahul Nair" class="w-full border rounded-lg p-2.5 border-slate-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Mobile / WhatsApp Number</label>
+          <input type="tel" id="custPhone" placeholder="e.g. 9876543210" class="w-full border rounded-lg p-2.5 border-slate-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Travel Date</label>
+          <input type="date" id="custDate" class="w-full border rounded-lg p-2.5 border-slate-300" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Number of Passengers</label>
+          <input type="number" id="custPax" value="2" min="1" max="26" class="w-full border rounded-lg p-2.5 border-slate-300" />
+        </div>
+      </div>
+
+      <button onclick="generatePDFContract()" class="w-full bg-slate-900 hover:bg-black text-white font-medium py-3 rounded-lg transition">
+        Download Spectrum Holidays Contract PDF
+      </button>
+    </div>
+
+    <!-- Hidden Contract Template for PDF Generation -->
+    <div style="position: absolute; left: -9999px; top: -9999px;">
+      <div id="contract-template" class="p-8 bg-white border border-slate-300" style="width: 700px; font-family: sans-serif;">
+        <div style="border-bottom: 2px solid #047857; padding-bottom: 12px; margin-bottom: 20px;">
+          <h2 style="color: #047857; font-size: 26px; margin: 0; font-weight: bold; letter-spacing: 0.5px;">SPECTRUM HOLIDAYS</h2>
+          <p style="font-size: 13px; color: #334155; margin: 4px 0 0; font-weight: 600;">Tour & Travel Agreement / Booking Memorandum</p>
+          <p style="font-size: 11px; color: #64748b; margin: 2px 0 0;">Kerala Tour Operations • Round Trips • Custom Holiday Packages</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold; width: 35%;">Customer Name:</td>
+            <td id="pdfName" style="padding: 6px 0;">-</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold;">Contact Number:</td>
+            <td id="pdfPhone" style="padding: 6px 0;">-</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold;">Date of Journey:</td>
+            <td id="pdfDate" style="padding: 6px 0;">-</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold;">Number of Passengers:</td>
+            <td id="pdfPax" style="padding: 6px 0;">-</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold;">Vehicle Assigned:</td>
+            <td id="pdfVehicle" style="padding: 6px 0;">-</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold;">Route Details:</td>
+            <td id="pdfRoute" style="padding: 6px 0;">-</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold;">Estimated Road Distance:</td>
+            <td id="pdfDistance" style="padding: 6px 0;">0 km</td>
+          </tr>
+          <tr style="border-top: 1px solid #e2e8f0;">
+            <td style="padding: 10px 0; font-weight: bold; font-size: 16px; color: #047857;">Estimated Base Fare:</td>
+            <td id="pdfFare" style="padding: 10px 0; font-weight: bold; font-size: 16px; color: #047857;">₹0</td>
+          </tr>
+        </table>
+
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 11px; color: #475569; margin-bottom: 30px;">
+          <strong>Spectrum Holidays - Standard Terms & Conditions:</strong>
+          <ol style="margin: 6px 0 0 16px; padding: 0;">
+            <li>Toll charges, parking fees, entry passes, and interstate permit charges (if any) are payable directly by the customer.</li>
+            <li>Driver bata is ₹400/day for ordinary trips and applicable if vehicle duty runs past 9:00 PM.</li>
+            <li>A 20% advance booking confirmation amount is required to confirm the reservation.</li>
+            <li>Rates are calculated based on the starting garage-to-garage or agreed pickup point distance.</li>
+          </ol>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 12px;">
+          <div>_______________________<br>Customer Signature</div>
+          <div style="text-align: right;">_______________________<br>For Spectrum Holidays</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Initialize Leaflet Map centered over Kerala
+    const map = L.map('map').setView([10.1632, 76.6413], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let routingControl = null;
+    let computedDistanceKm = 0;
+    let computedFare = 0;
+
+    function calculateRoute() {
+      const startCoords = document.getElementById('startPoint').value.split(',').map(Number);
+      const endCoords = document.getElementById('endPoint').value.split(',').map(Number);
+      const ratePerKm = Number(document.getElementById('vehicleType').value);
+
+      if (routingControl) {
+        map.removeControl(routingControl);
+      }
+
+      routingControl = L.Routing.control({
+        waypoints: [
+          L.latLng(startCoords[0], startCoords[1]),
+          L.latLng(endCoords[0], endCoords[1])
+        ],
+        routeWhileDragging: false,
+        addWaypoints: false,
+        show: false
+      }).addTo(map);
+
+      routingControl.on('routesfound', function(e) {
+        const routes = e.routes;
+        const summary = routes[0].summary;
+        computedDistanceKm = Math.round(summary.totalDistance / 1000);
+        computedFare = Math.round(computedDistanceKm * ratePerKm);
+
+        document.getElementById('summaryDistance').innerText = computedDistanceKm + ' km';
+        document.getElementById('summaryFare').innerText = '₹' + computedFare.toLocaleString('en-IN');
+        document.getElementById('fareSummary').classList.remove('hidden');
+      });
+    }
+
+    function generatePDFContract() {
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      const date = document.getElementById('custDate').value;
+      const pax = document.getElementById('custPax').value;
+      
+      const startSelect = document.getElementById('startPoint');
+      const startName = startSelect.options[startSelect.selectedIndex].text;
+
+      const endSelect = document.getElementById('endPoint');
+      const endName = endSelect.options[endSelect.selectedIndex].text;
+
+      const vehicleSelect = document.getElementById('vehicleType');
+      const vehicleName = vehicleSelect.options[vehicleSelect.selectedIndex].getAttribute('data-name');
+
+      if (!name || !phone || !date) {
+        alert('Please fill in Customer Name, Phone, and Travel Date first.');
+        return;
+      }
+
+      if (computedDistanceKm === 0) {
+        alert('Please click "Calculate Route & Fare" first.');
+        return;
+      }
+
+      // Populate hidden PDF container
+      document.getElementById('pdfName').innerText = name;
+      document.getElementById('pdfPhone').innerText = phone;
+      document.getElementById('pdfDate').innerText = date;
+      document.getElementById('pdfPax').innerText = pax;
+      document.getElementById('pdfVehicle').innerText = vehicleName;
+      document.getElementById('pdfRoute').innerText = startName + ' to ' + endName;
+      document.getElementById('pdfDistance').innerText = computedDistanceKm + ' km';
+      document.getElementById('pdfFare').innerText = '₹' + computedFare.toLocaleString('en-IN');
+
+      // Export using html2pdf
+      const element = document.getElementById('contract-template');
+      const opt = {
+        margin: 10,
+        filename: 'Spectrum_Holidays_Contract_' + name.replace(/\s+/g, '_') + '.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+    }
+  </script>
+</body>
+</html>
