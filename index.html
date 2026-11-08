@@ -19,7 +19,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
-  <!-- Swiper Slider JS (Loaded in HEAD so it is ready before script execution) -->
+  <!-- Swiper Slider JS -->
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
   <!-- PDF Generator -->
@@ -27,7 +27,7 @@
 
   <style>
     #map { height: 380px; width: 100%; border-radius: 0.5rem; }
-    .leaflet-routing-container { display: none; } /* Keeps UI clean; calculation works in background */
+    .leaflet-routing-container { display: none; }
     .swiper-pagination-bullet-active { background: #10b981 !important; }
   </style>
 </head>
@@ -90,6 +90,7 @@
         <div class="swiper-button-prev !text-white after:!text-xl drop-shadow"></div>
         <div class="swiper-pagination !bottom-2"></div>
       </div>
+    </div>
 
     <!-- Featured Kerala Holiday Packages -->
     <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
@@ -197,9 +198,9 @@
       </button>
     </div>
 
-    <!-- Hidden Contract Template for PDF Generation -->
-    <div style="position: absolute; left: -9999px; top: -9999px;">
-      <div id="contract-template" class="p-8 bg-white border border-slate-300" style="width: 700px; font-family: sans-serif;">
+    <!-- Hidden Container for PDF Generation (Only visible during instant export) -->
+    <div id="pdf-wrapper" style="display: none; position: fixed; top: 0; left: 0; z-index: 9999; background: white; width: 100%; height: 100%; overflow: auto; padding: 20px;">
+      <div id="contract-template" class="max-w-2xl mx-auto p-8 bg-white border border-slate-300" style="width: 750px; font-family: sans-serif; color: #1e293b;">
         <div style="border-bottom: 2px solid #047857; padding-bottom: 12px; margin-bottom: 20px;">
           <h2 style="color: #047857; font-size: 26px; margin: 0; font-weight: bold; letter-spacing: 0.5px;">SPECTRUM HOLIDAYS</h2>
           <p style="font-size: 13px; color: #334155; margin: 4px 0 0; font-weight: 600;">Tour & Travel Agreement / Booking Memorandum</p>
@@ -327,7 +328,7 @@
         return;
       }
 
-      // Populate hidden PDF container
+      // Populate contract data
       document.getElementById('pdfName').innerText = name;
       document.getElementById('pdfPhone').innerText = phone;
       document.getElementById('pdfDate').innerText = date;
@@ -337,17 +338,28 @@
       document.getElementById('pdfDistance').innerText = computedDistanceKm + ' km';
       document.getElementById('pdfFare').innerText = '₹' + computedFare.toLocaleString('en-IN');
 
-      // Export using html2pdf
+      const wrapper = document.getElementById('pdf-wrapper');
       const element = document.getElementById('contract-template');
+
+      // Temporarily show the template so html2canvas captures it cleanly
+      wrapper.style.display = 'block';
+
       const opt = {
-        margin: 10,
+        margin: [10, 10, 10, 10],
         filename: 'Spectrum_Holidays_Contract_' + name.replace(/\s+/g, '_') + '.pdf',
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          scrollY: 0,
+          scrollX: 0
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      html2pdf().set(opt).from(element).save();
+      html2pdf().set(opt).from(element).save().then(() => {
+        wrapper.style.display = 'none';
+      });
     }
 
     // Initialize Swiper Auto-Scrolling Gallery
